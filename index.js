@@ -83,7 +83,7 @@ module.exports = (event, lambda, cfg = {}) => {
     // Fan out if concurrency is set higher than 1
     if (concurrency > 1 && !event[config.test]) {
       // init Lambda service
-      // let lambda = require('./lib/lambda-service')
+      let _lambda = lambda ? lambda : require('./lib/lambda-service')
 
       // init promise array
       let invocations = []
@@ -106,7 +106,7 @@ module.exports = (event, lambda, cfg = {}) => {
         }
 
         // Add promise to invocations array
-        invocations.push(lambda.invoke(params).promise())
+        invocations.push(_lambda.invoke(params).promise())
       } // end for
 
       // Invoke concurrent functions
