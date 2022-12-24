@@ -1,10 +1,9 @@
 # Lambda Warmer
 
-[![npm](https://img.shields.io/npm/v/lambda-warmer.svg)](https://www.npmjs.com/package/lambda-warmer)
-[![npm](https://img.shields.io/npm/l/lambda-warmer.svg)](https://www.npmjs.com/package/lambda-warmer)
-[![Build Status](https://travis-ci.org/jeremydaly/lambda-warmer.svg?branch=master)](https://travis-ci.org/jeremydaly/lambda-warmer)
-[![Coverage Status](https://coveralls.io/repos/github/jeremydaly/lambda-warmer/badge.svg?branch=master)](https://coveralls.io/github/jeremydaly/lambda-warmer?branch=master)
-![dependencies](https://img.shields.io/badge/dependencies-0-brightgreen.svg)
+[![npm](https://img.shields.io/npm/v/@jayaganeshk/lambda-warmer.svg)](https://www.npmjs.com/package/@jayaganeshk/lambda-warmer)
+[![npm](https://img.shields.io/npm/l/@jayaganeshk/lambda-warmer.svg)](https://www.npmjs.com/package/lambda-warmer)
+
+**Note:** This package is forked from [lambda-warmer](https://www.npmjs.com/package/lambda-warmer).
 
 ## A module to optimize AWS Lambda function cold starts
 
@@ -19,18 +18,18 @@ He also mentioned that if you want to keep several **concurrent** functions warm
 
 You can read the key takeaways from his talk [here](https://www.jeremydaly.com/15-key-takeaways-from-the-serverless-talk-at-aws-startup-day/).
 
-Following these "best practices", I created **Lambda Warmer**. It is a lightweight module (with no dependencies) that can be added to your Lambda functions to manage "warming" events as well as handling automatic fan-out for initializing *concurrent functions*. Just instrument your code and schedule a "ping".
+Following these "best practices", I created **Lambda Warmer**. It is a lightweight module (with no dependencies) that can be added to your Lambda functions to manage "warming" events as well as handling automatic fan-out for initializing _concurrent functions_. Just instrument your code and schedule a "ping".
 
 **NOTE:** Lambda Warmer will invoke the function multiple times using the AWS-SDK in order to scale concurrency (if you want to). Your functions MUST have `lambda:InvokeFunction` permissions so that they can invoke themselves. Following the Principle of Least Privilege, you should limit the `Resource` to the function itself, e.g.:
 
 ```yaml
-- Effect: "Allow"
+- Effect: 'Allow'
   Action:
-    - "lambda:InvokeFunction"
-  Resource: "arn:aws:lambda:us-east-1:{AWS-ACCOUNT-ID}:function:my-test-function"
+    - 'lambda:InvokeFunction'
+  Resource: 'arn:aws:lambda:us-east-1:{AWS-ACCOUNT-ID}:function:my-test-function'
 ```
 
-If you'd like to know more about how **Lambda Warmer** works, and why you might (or might not) want to use it, read this *[Lambda Warmer: Optimize AWS Lambda Function Cold Starts](https://www.jeremydaly.com/lambda-warmer-optimize-aws-lambda-function-cold-starts/)* post.
+If you'd like to know more about how **Lambda Warmer** works, and why you might (or might not) want to use it, read this _[Lambda Warmer: Optimize AWS Lambda Function Cold Starts](https://www.jeremydaly.com/lambda-warmer-optimize-aws-lambda-function-cold-starts/)_ post.
 
 ## Installation
 
@@ -42,7 +41,7 @@ npm i lambda-warmer
 
 ## Instrumenting your Lambda functions
 
-Adding Lambda Warmer to your functions is simple. Require `lambda-warmer` outside of your main handler and then pass the `event` as the first argument into your declared variable. Lambda Warmer will return a resolved promise with either `true`, meaning this *is* a warming invocation, or `false`, this isn't a warming invocation.
+Adding Lambda Warmer to your functions is simple. Require `lambda-warmer` outside of your main handler and then pass the `event` as the first argument into your declared variable. Lambda Warmer will return a resolved promise with either `true`, meaning this _is_ a warming invocation, or `false`, this isn't a warming invocation.
 
 If you're using `async/await`, you can `await` the result of Lambda Warmer and `return` if true. This will short circuit your function and prevent it from executing the rest of the main handler.
 
@@ -64,11 +63,11 @@ const warmer = require('lambda-warmer')
 
 exports.handler = (event, context, callback) => {
   // Start a promise chain
-  warmer(event).then(isWarmer => {
+  warmer(event).then((isWarmer) => {
     // if a warming event
     if (isWarmer) {
-      callback(null,'warmed')
-    // else proceed with handler logic
+      callback(null, 'warmed')
+      // else proceed with handler logic
     } else {
       callback(null, 'Hello from Lambda')
     }
@@ -91,22 +90,28 @@ You can send in a configuration object as the second parameter to change Lambda 
 }
 ```
 
-### flag *(string)*
+### flag _(string)_
+
 Name of the `event` field used to notify Lambda Warmer that this is a "warming" invocation. Defaults to `warmer`.
 
-### concurrency *(string)*
+### concurrency _(string)_
+
 Name of the `event` field used to specify the number of concurrent functions you'd like to warm. Defaults to `concurrency`.
 
-### test *(string)*
+### test _(string)_
+
 Name of the `event` field used to flag a warming invocation as a test. Defaults to `test`.
 
-### log *(boolean)*
+### log _(boolean)_
+
 Flag to control whether or not CloudWatch logs are automatically generated. Defaults to `true`.
 
-### correlationId *(string)*
+### correlationId _(string)_
+
 Identifier that gets passed to all concurrent Lambda invocations. This can be used to group invocations within your logs. If no `correlationId` is passed, it will default to the id generated for the invoked function. Passing the `context.awsRequestId` is good practice.
 
-### delay *(number)*
+### delay _(number)_
+
 Minimum amount of time (in milliseconds) for concurrent functions to run. Concurrent functions are invoked asynchronously. Setting a delay enforces Lambda to create multiple invocations. Defaults to `75` to attempt sub 100ms invocation times.
 
 Example passing a configuration:
@@ -114,7 +119,8 @@ Example passing a configuration:
 ```javascript
 exports.handler = async (event, context) => {
   // if a warming event
-  if (await warmer(event, { correlationId: context.awsRequestId, delay: 50 })) return 'warmed'
+  if (await warmer(event, { correlationId: context.awsRequestId, delay: 50 }))
+    return 'warmed'
   // else proceed with handler logic
   return 'Hello from Lambda'
 }
@@ -135,6 +141,7 @@ The names of `warmer` and `concurrency` can be changed using the configuration o
 **NOTE:** Non-VPC functions are kept warm for approximately 5 minutes whereas VPC-based functions are kept warm for 15 minutes. Set your schedule for invocations accordingly. There is no need to ping your functions more often than the minimum warm time.
 
 ### TIP: Preparing for traffic spikes
+
 If your application experiences periodic traffic spikes throughout the day, you can set up multiple CloudWatch Rules that change the concurrency based on the time of day or day itself.
 
 ### Using a SAM Template
@@ -198,4 +205,5 @@ Sample log:
 ```
 
 ## Contributing
+
 I've created a number of custom scripts to do similar cold start mitigation, but I figured I'd share this more complete version to save everyone some time (including my future self). If you would like to contribute, please submit a PR or add [issues](https://github.com/jeremydaly/lambda-warmer/issues) for bug reports and feature ideas.
